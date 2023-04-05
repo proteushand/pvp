@@ -1,0 +1,46 @@
+default {
+    state_entry() {
+        llParticleSystem([  // start of particle settings
+           // Texture Parameters:
+           PSYS_SRC_TEXTURE, "6fa7806e-9ec4-6213-ce8d-42c43d34ebac", 
+           PSYS_PART_START_SCALE, <0.1, 1, 4>, PSYS_PART_END_SCALE, <.1, 1, 4>, 
+           PSYS_PART_START_COLOR, <0.000, 1.000, 0.000>,    PSYS_PART_END_COLOR, <0.000, 1.000, 0.000>, 
+           PSYS_PART_START_ALPHA,  (float)0.5,            PSYS_PART_END_ALPHA, (float)0.1,   
+ 
+           // Production Parameters:
+           PSYS_SRC_BURST_PART_COUNT, (integer)2, 
+           PSYS_SRC_BURST_RATE, (float) 0.03,  
+           PSYS_PART_MAX_AGE, (float)1.0, 
+           PSYS_SRC_MAX_AGE,(float) 0.0,  
+ 
+           // Placement Parameters:
+           PSYS_SRC_PATTERN, (integer)8, // 1=DROP, 2=EXPLODE, 4=ANGLE, 8=ANGLE_CONE,
+ 
+           // Placement Parameters (for any non-DROP pattern):
+           PSYS_SRC_BURST_SPEED_MIN, (float)100.0,   PSYS_SRC_BURST_SPEED_MAX, (float)10.0, 
+        // PSYS_SRC_BURST_RADIUS, 0.0,
+ 
+           // Placement Parameters (only for ANGLE & CONE patterns):
+           PSYS_SRC_ANGLE_BEGIN, (float) 0.3,    PSYS_SRC_ANGLE_END, (float)0.3,  
+        // PSYS_SRC_OMEGA, <0,0,0>, 
+ 
+           // After-Effect & Influence Parameters:
+           PSYS_SRC_ACCEL, <0.0,0.0, - 2.0 >,  
+        // PSYS_SRC_TARGET_KEY,      llGetLinkKey(llGetLinkNumber() + 1),       
+ 
+           PSYS_PART_FLAGS, (integer)( 0         // Texture Options:     
+                                | PSYS_PART_INTERP_COLOR_MASK   
+                                | PSYS_PART_INTERP_SCALE_MASK   
+                            //  | PSYS_PART_EMISSIVE_MASK   
+                                | PSYS_PART_FOLLOW_VELOCITY_MASK
+                                                  // After-effect & Influence Options:
+                                | PSYS_PART_WIND_MASK            
+                                | PSYS_PART_BOUNCE_MASK          
+                             // | PSYS_PART_FOLLOW_SRC_MASK     
+                             // | PSYS_PART_TARGET_POS_MASK     
+                             // | PSYS_PART_TARGET_LINEAR_MASK   
+                            ) 
+            //end of particle settings                     
+        ]);
+    } 
+}

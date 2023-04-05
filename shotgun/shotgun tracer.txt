@@ -1,0 +1,127 @@
+vector gBRxX( vector Ro, vector Rd, vector Bo, vector Bs, rotation Br){
+    float k = gBRxZ(Ro,Rd,Bo,Bs,Br);
+    if( k != -1.0 ) return Ro + Rd * k;
+    else return ZERO_VECTOR;}
+
+float gBRxZ(vector Ro,vector Rd, vector Bo, vector Bs, rotation Br){
+    vector oB = (Ro-Bo)/Br;    vector dB = Rd/Br;    vector eB = 0.5*Bs;
+    float mD = -1.0;    float D;    vector X;
+ 
+    if(llFabs(dB.x) > 0.000001){
+        D = (-eB.x - oB.x ) / dB.x;
+        if(D >= 0.0){
+            X = oB + D * dB;
+            if(X.y >= -eB.y && X.y <= eB.y && X.z >= -eB.z && X.z <= eB.z)
+                mD = D;
+        }
+        D = ( eB.x - oB.x ) / dB.x;
+        if (D >= 0.0){
+            X = oB + D * dB;
+            if(X.y >= -eB.y && X.y <= eB.y && X.z >= -eB.z && X.z <= eB.z) 
+                if (mD < 0.0 || mD > D)
+                    mD = D;
+        }
+    }
+ 
+    if(llFabs(dB.y) > 0.000001){
+        D = (-eB.y - oB.y ) / dB.y;
+        if(D >= 0.0){
+            X = oB + D * dB;
+            if(X.x >= -eB.x && X.x <= eB.x && X.z >= -eB.z && X.z <= eB.z)
+                if (mD < 0.0 || mD > D)
+                    mD = D;
+        }
+        D = ( eB.y - oB.y ) / dB.y;
+        if (D >= 0.0){
+            X = oB + D * dB;
+            if(X.x >= -eB.x && X.x <= eB.x && X.z >= -eB.z && X.z <= eB.z)
+                if (mD < 0.0 || mD > D)
+                    mD = D;
+        }
+    }
+ 
+    if(llFabs(dB.z) > 0.000001){
+        D = (-eB.z - oB.z ) / dB.z;
+        if(D >= 0.0){
+            X = oB + D * dB;
+            if(X.x >= -eB.x && X.x <= eB.x && X.y >= -eB.y && X.y <= eB.y)
+                if (mD < 0.0 || mD > D)
+                    mD = D;
+        }
+        D = ( eB.z - oB.z ) / dB.z;
+        if (D >= 0.0){
+            X = oB + D * dB;
+            if(X.x >= -eB.x && X.x <= eB.x && X.y >= -eB.y && X.y <= eB.y)
+                if (mD < 0.0 || mD > D)
+                    mD = D;
+        }
+    }
+ 
+    return mD;
+}
+list targetPosList;
+
+integer vec2int(vector vec)
+//============================================================================================
+{
+    vec *= 2.0;
+    return (((integer)vec.x) & 0x000001ff) +
+           ((((integer)vec.y) & 0x000001ff) << 9) +
+           ((((integer)vec.z) & 0x00001fff) << 18);
+}vector int2vec(integer int)
+{
+    return <int & 0x000001ff,(int & 0x0003fe00) >> 9,(int & 0x7ffc0000) >> 18> / 2.0;
+}
+default{
+    state_entry(){
+        llVolumeDetect(FALSE);
+        llSetStatus(STATUS_ROTATE_X|STATUS_ROTATE_Y|STATUS_ROTATE_Z,FALSE);
+                llSetLinkPrimitiveParamsFast(LINK_SET,[PRIM_TYPE,PRIM_TYPE_SPHERE, PRIM_HOLE_DEFAULT,<0,0.1,0>,0.0,<0,0,0>, <0,0.5,0>]);
+    }
+    on_rez(integer r){
+        list targets;
+        llSetLinkPrimitiveParamsFast(LINK_THIS,[PRIM_ROTATION,llGetRot()*llEuler2Rot(<0,90*DEG_TO_RAD,0>)]);
+        float spread = ((float)r/100)*DEG_TO_RAD;
+        integer x = llGetNumberOfPrims();
+        for(x;x>1;x--){
+            rotation rot = llEuler2Rot(<0,llFrand(spread/2)-llFrand(spread/2),llFrand(spread/2)-llFrand(spread/2)>);
+            list castRay = llCastRay(llGetPos(),gBRxX(llGetPos(),<1,0,0>*rot,<128,128,2066>, <256,256,4120>, ZERO_ROTATION),[]);
+            if(castRay == [0]){
+                llSetLinkPrimitiveParamsFast(x,[PRIM_ROT_LOCAL,rot,PRIM_TYPE,PRIM_TYPE_SPHERE, PRIM_HOLE_DEFAULT,<0,1,0>,0.0,<0,0,0>, <0,0.5,0>]);
+            }else{
+                llSetLinkPrimitiveParamsFast(x,[PRIM_ROT_LOCAL,rot,PRIM_TYPE,PRIM_TYPE_SPHERE, PRIM_HOLE_DEFAULT,<0,1,0>,0.0,<0,0,0>, <0.49-llVecDist(llGetPos(),llList2Vector(castRay,1))/1024,0.5,0>]);
+            }if(llGetAgentSize(llList2String(castRay,0))!=ZERO_VECTOR){
+                targets = targets+[llList2String(castRay,0)];
+            }
+        }
+        llSetLinkAlpha(LINK_ALL_OTHERS,0.1,ALL_SIDES);
+        llSetTimerEvent(1.0f/60.0f);
+        llResetTime();
+        list targetPosList;
+        integer c = llGetListLength(targets);
+        for(c;c>=0;c--){
+            targetPosList = llListInsertList(targetPosList,llGetObjectDetails(llList2String(targets,c),[OBJECT_POS]),0);
+        }
+        integer length = llGetListLength(targetPosList)-1;
+        if(length==0)return;
+        for(length;length>=0;length--){
+            vector pos = llList2Vector(targetPosList,length);
+            llRezObject("rc.variable",llGetPos()+<0,0,7>,ZERO_VECTOR,llEuler2Rot(<DEG_TO_RAD*(10+160.0/(llVecDist(llGetPos(),pos)/10)/100),0,0>),vec2int(pos));
+        }
+    }collision_start(integer c){
+        list targetPosList;
+        for(c;c>=0;c--){
+            targetPosList = llListInsertList(targetPosList,llGetObjectDetails(llDetectedKey(0),[OBJECT_POS]),0);
+        }
+        integer length = llGetListLength(targetPosList)-1;
+        if(length==0)return;
+        for(length;length>=0;length--){
+            vector pos = llList2Vector(targetPosList,length);
+            llRezObject("rc.variable",llGetPos()+<0,0,7>,ZERO_VECTOR,llEuler2Rot(<DEG_TO_RAD*(10+160.0/(llVecDist(llGetPos(),pos)/10)/100),0,0>),vec2int(pos));
+        }
+    }timer(){
+        targetPosList = [];
+        if(llGetTime()>0.2f)
+        llDie();
+    }
+}

@@ -1,0 +1,93 @@
+float gBRxZ(vector Ro,vector Rd, vector Bo, vector Bs, rotation Br){
+    vector oB = (Ro-Bo)/Br;    vector dB = Rd/Br;    vector eB = 0.5*Bs;
+    float mD = -1.0;    float D;    vector X;
+ 
+    if(llFabs(dB.x) > 0.000001){
+        D = (-eB.x - oB.x ) / dB.x;
+        if(D >= 0.0){
+            X = oB + D * dB;
+            if(X.y >= -eB.y && X.y <= eB.y && X.z >= -eB.z && X.z <= eB.z)
+                mD = D;
+        }
+        D = ( eB.x - oB.x ) / dB.x;
+        if (D >= 0.0){
+            X = oB + D * dB;
+            if(X.y >= -eB.y && X.y <= eB.y && X.z >= -eB.z && X.z <= eB.z) 
+                if (mD < 0.0 || mD > D)
+                    mD = D;
+        }
+    }
+ 
+    if(llFabs(dB.y) > 0.000001){
+        D = (-eB.y - oB.y ) / dB.y;
+        if(D >= 0.0){
+            X = oB + D * dB;
+            if(X.x >= -eB.x && X.x <= eB.x && X.z >= -eB.z && X.z <= eB.z)
+                if (mD < 0.0 || mD > D)
+                    mD = D;
+        }
+        D = ( eB.y - oB.y ) / dB.y;
+        if (D >= 0.0){
+            X = oB + D * dB;
+            if(X.x >= -eB.x && X.x <= eB.x && X.z >= -eB.z && X.z <= eB.z)
+                if (mD < 0.0 || mD > D)
+                    mD = D;
+        }
+    }
+ 
+    if(llFabs(dB.z) > 0.000001){
+        D = (-eB.z - oB.z ) / dB.z;
+        if(D >= 0.0){
+            X = oB + D * dB;
+            if(X.x >= -eB.x && X.x <= eB.x && X.y >= -eB.y && X.y <= eB.y)
+                if (mD < 0.0 || mD > D)
+                    mD = D;
+        }
+        D = ( eB.z - oB.z ) / dB.z;
+        if (D >= 0.0){
+            X = oB + D * dB;
+            if(X.x >= -eB.x && X.x <= eB.x && X.y >= -eB.y && X.y <= eB.y)
+                if (mD < 0.0 || mD > D)
+                    mD = D;
+        }
+    }
+ 
+    return mD;
+}
+vector gBRxX( vector Ro, vector Rd, vector Bo, vector Bs, rotation Br){
+    float k = gBRxZ(Ro,Rd,Bo,Bs,Br);
+    if( k != -1.0 ) return Ro + Rd * k;
+    else return ZERO_VECTOR;}
+integer vec2int(vector vec)
+//============================================================================================
+{
+    vec *= 2.0;
+    return (((integer)vec.x) & 0x000001ff) +
+           ((((integer)vec.y) & 0x000001ff) << 9) +
+           ((((integer)vec.z) & 0x00001fff) << 18);
+}vector int2vec(integer int)
+{
+    return <int & 0x000001ff,(int & 0x0003fe00) >> 9,(int & 0x7ffc0000) >> 18> / 2.0;
+}
+
+default
+{
+    link_message(integer c,integer n,string msg,key id){
+        llRequestPermissions(llGetOwner(),PERMISSION_TRACK_CAMERA);
+        @a;
+        if(llGetColor(1)==<1.0,1.0,1.0>){
+            list objectDescList = llCSV2List(llGetObjectDesc());
+            float spread = (float)llList2String(objectDescList,0);
+            vector spreadVec = <0,spread/2-llFrand(spread),spread/2-llFrand(spread)>;
+            //vector offset = <0,0,size.z/2>;
+            rotation rot = llGetRot()*llEuler2Rot(ZERO_VECTOR*DEG_TO_RAD);
+            //rotation rot = llGetRot();
+            llTriggerSound("13ef313d-bb43-17f9-b1f7-e58f5f07f2a5",1);
+            llRezObject("Shotgun Tracer",llGetCameraPos()+<6,0,0>*rot,<203,0,0>*rot,rot*llEuler2Rot(<0,-90*DEG_TO_RAD,0>),llRound(spread*100));
+            llSleep(0.1);
+            objectDescList = llListReplaceList(objectDescList,[(integer)llList2String(objectDescList,1)-1],1,1);
+            llSetObjectDesc(llList2CSV(objectDescList));
+            jump a;
+        }
+    }
+}
